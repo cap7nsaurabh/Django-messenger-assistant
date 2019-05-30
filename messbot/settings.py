@@ -26,6 +26,7 @@ SECRET_KEY = '<add yours:)>'
 DEBUG = True
 
 ALLOWED_HOSTS = ['*.ngrok.io','be22c9d5.ngrok.io','127.0.0.1']
+ALLOWED_HOSTS = ['*.ngrok.io','127.0.0.1']
 
 
 # Application definition
