@@ -9,7 +9,7 @@ import bot.utils
 import json
 import requests, random, re
 
-VERIFY_TOKEN = "7711df715abcfa28ace91507da2d28d907a2d2db3c7c6639b0"  # generated above
+VERIFY_TOKEN = "get yours"  # generated above
 
 """
 FB_ENDPOINT & PAGE_ACCESS_TOKEN
