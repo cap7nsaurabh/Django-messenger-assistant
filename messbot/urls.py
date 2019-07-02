@@ -14,10 +14,17 @@ Including another URLconf
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
 from django.contrib import admin
+from django.conf.urls import url,include
 from django.urls import path,include
-from  django.conf.urls import url
-
+from django.urls import re_path
+from bot.views import FacebookWebhookView
+app_name="bot"
 urlpatterns = [
-    path('admin/', admin.site.urls),
-    #path('^',include(bot.urls))
+    url(r'^admin/', admin.site.urls),
+    #url(r'^home/', include('bot.urls'))
+    #path('admin/', admin.site.urls),
+    #path('home/',include('bot.urls')),
+    re_path(r'^12132/$',FacebookWebhookView.as_view(),name='webhook')
+    #path('',include('bot.urls')),
+    #path('blog/',include('bot.urls'))
 ]

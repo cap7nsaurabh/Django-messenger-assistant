@@ -1,30 +1,51 @@
-from django.shortcuts import render
-from django.http import HttpResponse,JsonResponse
-from django.views.generic import View
-from django.views.decorators.csrf import csrf_exempt
+
+
+from django.http import HttpResponse
 # Create your views here.
-
 from django.utils.decorators import method_decorator
-import bot.utils
-import json
-import requests, random, re
+from django.views.decorators.csrf import csrf_exempt
+from django.views.generic import View
 
-VERIFY_TOKEN = "get yours"  # generated above
+VERIFY_TOKEN = "generate yours ..you can keep as simple as you want but keep it secret" 
+from bot.utils import *
 
-"""
-FB_ENDPOINT & PAGE_ACCESS_TOKEN
-Come from the next step.
-"""
-FB_ENDPOINT = 'https://graph.facebook.com/v2.12/'
-PAGE_ACCESS_TOKEN = ""
+# """
+# FB_ENDPOINT & PAGE_ACCESS_TOKEN
+# Come from the next step.
+# """
+FB_ENDPOINT = 'https://graph.facebook.com/v3.3/'
+PAGE_ACCESS_TOKEN = "get your at  developer.facebook.com"
 
 
-def parse_and_send_fb_message(fbid, recevied_message):
+def parse_message(fbid, recevied_message):
     # Remove all punctuations, lower case the text and split it based on space
-    tokens = re.sub(r"[^a-zA-Z0-9\s]", ' ', recevied_message).lower().split()
-    msg = None
-
-
+    message=""
+    print(recevied_message)
+    matches={}
+    command=recevied_message.split(' ',1)
+    if command[0]=='!help':
+        message=get_help()
+        send_message(fbid,message)
+    if command[0]=='!movie_rating':
+        try:
+            msg=command[1]
+            print(msg)
+            message=getmovies(msg)
+        except:
+            message="input error try again"
+        send_message(fbid,message)
+    if command[0]=='!matches':
+        li=get_cricket_matches()
+        matches=li
+        message=extract_message(matches)
+        send_message(fbid,message)
+    if re.match(r"GM[0-9]+$", command[0]):
+        try:
+            dat=matches[command[0]]
+            message=getm(dat)
+        except:
+            message="no match associated with this code! try !matches command again"
+def send_message(fbid,msg):
     if msg is not None:
         endpoint = f"{FB_ENDPOINT}/me/messages?access_token={PAGE_ACCESS_TOKEN}"
         response_msg = json.dumps({"recipient": {"id": fbid}, "message": {"text": msg}})
@@ -33,7 +54,7 @@ def parse_and_send_fb_message(fbid, recevied_message):
             headers={"Content-Type": "application/json"},
             data=response_msg)
         print(status.json())
-        return stats.json()
+        return status.json()
     return None
 
 
@@ -42,12 +63,12 @@ class FacebookWebhookView(View):
     def dispatch(self, request, *args, **kwargs):
         return super().dispatch(request, *args, **kwargs)  # python3.6+ syntax
 
-    '''
-    hub.mode
-    hub.verify_token
-    hub.challenge
-    Are all from facebook. We'll discuss soon.
-    '''
+    #    '''
+    #    hub.mode
+    #    hub.verify_token
+    #    hub.challenge
+    #    Are all from facebook. We'll discuss soon.
+    #    '''
 
     def get(self, request, *args, **kwargs):
         hub_mode = request.GET.get('hub.mode')
@@ -55,15 +76,33 @@ class FacebookWebhookView(View):
         hub_challenge = request.GET.get('hub.challenge')
         if hub_token != VERIFY_TOKEN:
             return HttpResponse('Error, invalid token', status_code=403)
+        print("verification succesful")
         return HttpResponse(hub_challenge)
 
     def post(self, request, *args, **kwargs):
         incoming_message = json.loads(request.body.decode('utf-8'))
-        for entry in incoming_message['entry']:
-            for message in entry['messaging']:
-                if 'message' in message:
-                    fb_user_id = message['sender']['id']  # sweet!
-                    fb_user_txt = message['message'].get('text')
-                    if fb_user_txt:
-                        parse_and_send_fb_message(fb_user_id, fb_user_txt)
+        print(incoming_message)
+        mes=""
+        sender=""
+        try:
+            for it in incoming_message['entry'][0]['messaging'][0].items():
+                if 'message' in it:
+                    print(it[1]['text'])
+                    mes = it[1]['text']
+                if 'sender' in it:
+                    print(it[1]['id'])
+                    sender = it[1]['id']
+        except:
+            print("no message found")
+
+        #            fb_user_id = message['sender']['id']  # sweet!
+        #            fb_user_txt = message['message'].get('text')
+        try:
+            if mes:
+                parse_message(sender, mes)
+                print("success")
+        except:
+            print("could not send message")
         return HttpResponse("Success", status=200)
+    # bot.utils.get_news(country)
+    # bot.utils.getmovies(msg)#msg in form id,name,type,year
